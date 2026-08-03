@@ -143,9 +143,52 @@ textarea.form-input{resize:vertical;min-height:40px}
 .task-checkbox{width:22px;height:22px}
 .mobile-stats{display:block}
 .calendar-day{min-height:38px;font-size:11px}
+.mobile-tab{font-size:11px;padding:8px 0 10px}
+.mobile-tab-icon{font-size:18px}
+.task-card-info{padding-left:32px}
 }
 .repeat-end-date{display:none;margin-top:8px}
 .repeat-end-date.show{display:block}
+/* Task card two-line layout */
+.task-card{flex-direction:column;align-items:stretch;gap:0!important}
+.task-card-row1{display:flex;align-items:center;gap:10px}
+.task-card-info{display:flex;align-items:center;gap:8px;padding-left:28px;margin-top:3px;flex-wrap:wrap}
+.task-card-info .task-meta{font-size:11px}
+.task-card-info .task-meta-date{color:var(--blue-600);font-weight:500}
+.task-card-info .task-meta-overdue{color:var(--red-600);font-weight:500}
+/* News section */
+.news-section{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px 16px;margin-top:16px}
+.news-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.news-title{font-size:15px;font-weight:600;display:flex;align-items:center;gap:6px}
+.news-tabs{display:flex;gap:4px;flex-wrap:wrap}
+.news-tab{font-size:12px;padding:3px 10px;border-radius:14px;border:1px solid var(--border);cursor:pointer;color:var(--text-2);transition:all .15s}
+.news-tab.active{background:var(--blue-50);border-color:var(--blue-400);color:var(--blue-600);font-weight:500}
+.news-tab:hover:not(.active){background:var(--surface-3)}
+.news-list{max-height:320px;overflow-y:auto}
+.news-item{display:flex;align-items:center;gap:8px;padding:7px 4px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s}
+.news-item:last-child{border-bottom:none}
+.news-item:hover{background:var(--surface-3)}
+.news-rank{font-size:13px;font-weight:700;color:var(--text-3);width:22px;text-align:center;flex-shrink:0}
+.news-item:nth-child(1) .news-rank{color:var(--red-400)}
+.news-item:nth-child(2) .news-rank{color:var(--coral-400)}
+.news-item:nth-child(3) .news-rank{color:var(--amber-400)}
+.news-item-title{flex:1;font-size:13px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.news-item-hot{font-size:11px;color:var(--text-3);flex-shrink:0}
+.news-loading{text-align:center;padding:20px;color:var(--text-3);font-size:13px}
+.news-error{text-align:center;padding:20px;color:var(--text-3);font-size:13px}
+.news-refresh{font-size:11px;color:var(--blue-600);cursor:pointer;border:none;background:transparent;font-family:var(--font)}
+.news-refresh:hover{text-decoration:underline}
+/* Overdue / historical tasks */
+.overdue-section{margin-top:16px}
+.overdue-section .section-title{color:var(--red-600)}
+.overdue-badge{font-size:11px;padding:1px 7px;border-radius:4px;font-weight:500;background:var(--red-50);color:var(--red-600);white-space:nowrap;flex-shrink:0}
+.historical-list .task-card{border-left:3px solid var(--red-400)}
+/* Calendar completed day */
+.calendar-day.all-done{background:var(--teal-50)}
+.calendar-day.all-done::before{content:'';position:absolute;top:4px;right:4px;width:6px;height:6px;border-radius:50%;background:var(--teal-400)}
+.calendar-day .day-done-count{font-size:9px;color:var(--teal-600);margin-top:1px}
+/* Completed tasks in calendar day view */
+.completed-day-header{font-size:13px;color:var(--teal-600);font-weight:500;margin:12px 0 6px;display:flex;align-items:center;gap:6px}
 </style>
 </head>
 <body>
@@ -161,6 +204,7 @@ textarea.form-input{resize:vertical;min-height:40px}
   <div class="sidebar">
     <div class="nav-header">导航</div>
     <div class="nav-item active" data-view="today">今日总览</div>
+    <div class="nav-item" data-view="history">历史遗留</div>
     <div class="nav-item" data-view="calendar">日历视图</div>
     <div class="nav-header"><span class="nav-dot" style="background:#378ADD"></span>工作</div>
     <div class="nav-item" data-module-nav="work">全部工作</div>
@@ -184,6 +228,7 @@ textarea.form-input{resize:vertical;min-height:40px}
 <button class="fab" id="fab"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
 <div class="mobile-tabs">
   <div class="mobile-tab active" data-tab="today"><span class="mobile-tab-icon">📋</span>今日</div>
+  <div class="mobile-tab" data-tab="history"><span class="mobile-tab-icon">⚠️</span>遗留</div>
   <div class="mobile-tab" data-tab="work"><span class="mobile-tab-icon">💼</span>工作</div>
   <div class="mobile-tab" data-tab="children"><span class="mobile-tab-icon">🎒</span>孩子</div>
   <div class="mobile-tab" data-tab="life"><span class="mobile-tab-icon">🌸</span>生活</div>
@@ -256,13 +301,23 @@ var MODULES = {
   children:{name:'孩子',color:'teal',categories:{study:'学习管理',exercise:'运动健康',diet:'饮食作息'}},
   life:{name:'生活',color:'coral',categories:{dance:'跳舞',fitness:'健身',travel:'出游'}}
 };
-var state = {tasks:[],currentView:'today',currentModule:null,currentCategory:null,calendarDate:new Date(),selectedDate:null};
+var state = {tasks:[],currentView:'today',currentModule:null,currentCategory:null,calendarDate:new Date(),selectedDate:null,newsData:null,newsLoading:false,currentNewsSource:'toutiao',newsError:null};
 var modalState = {module:'work',priority:'medium',repeat:'none',editingId:null};
+var NEWS_SOURCES = [
+  {key:'toutiao',name:'头条热点',url:'https://dailyhotapi.3yu3.top/toutiao'},
+  {key:'douyin',name:'抖音热榜',url:'https://dailyhotapi.3yu3.top/douyin'},
+  {key:'bilibili',name:'B站热门',url:'https://dailyhotapi.3yu3.top/bilibili'},
+  {key:'ithome',name:'IT之家',url:'https://dailyhotapi.3yu3.top/ithome'}
+];
 
 function loadData(){
   var raw = localStorage.getItem(STORAGE_KEY);
   if(raw){
     try{var d=JSON.parse(raw);state.tasks=d.tasks||[]}catch(e){state.tasks=[]}
+    state.tasks.forEach(function(t){
+      if(t.completed&&!t.completedDate)t.completedDate=t.date;
+      if(!t.completedDates)t.completedDates=[];
+    });
   } else {
     initSampleData();
   }
@@ -277,7 +332,7 @@ function initSampleData(){
   state.tasks = [
     {id:Date.now(),title:'华为西安Java架构师岗位投递简历',module:'work',category:'fulltime',priority:'high',date:today,time:'',completed:false,repeat:'none',note:''},
     {id:Date.now()+1,title:'Beyond Effects特效提交审核',module:'work',category:'sidejob',priority:'medium',date:today,time:'',completed:false,repeat:'none',note:''},
-    {id:Date.now()+2,title:'Claw产品开发-工作台V1',module:'work',category:'startup',priority:'high',date:today,time:'',completed:true,repeat:'none',note:''},
+    {id:Date.now()+2,title:'Claw产品开发-工作台V1',module:'work',category:'startup',priority:'high',date:today,time:'',completed:true,completedDate:today,repeat:'none',note:''},
     {id:Date.now()+3,title:'陪孩子完成数学作业',module:'children',category:'study',priority:'medium',date:today,time:'19:00',completed:false,repeat:'none',note:''},
     {id:Date.now()+4,title:'安排孩子周末游泳课',module:'children',category:'exercise',priority:'low',date:fmtDate(sat),time:'',completed:false,repeat:'none',note:''},
     {id:Date.now()+5,title:'健身房晨练30分钟',module:'life',category:'fitness',priority:'medium',date:today,time:'07:00',completed:false,repeat:'daily',completedDates:[today],repeatEndDate:'2026-12-31',note:''},
@@ -308,6 +363,106 @@ function getViewDate(){
   if(state.currentView==='calendar'&&state.selectedDate)return state.selectedDate;
   return getTodayStr();
 }
+function getOverdueTasks(){
+  var todayStr=getTodayStr();
+  var result=[];
+  state.tasks.forEach(function(t){
+    if(t.repeat==='none'||!t.repeat){
+      if(!t.completed&&t.date<todayStr)result.push(t);
+    } else {
+      if(!isTaskDoneOnDate(t,todayStr)&&taskOnDate(t,todayStr)){
+        var lastDate=getLastRepeatDateBefore(t,todayStr);
+        if(lastDate)result.push(Object.assign({},t,{_overdueDate:lastDate,_isRepeatOverdue:true}));
+      }
+    }
+  });
+  var po={high:0,medium:1,low:2};
+  result.sort(function(a,b){if(po[a.priority]!==po[b.priority])return po[a.priority]-po[b.priority];return a.date.localeCompare(b.date)});
+  return result;
+}
+function getLastRepeatDateBefore(task,beforeDate){
+  if(task.repeat==='daily'){
+    var d=new Date(beforeDate);d.setDate(d.getDate()-1);
+    return fmtDate(d);
+  }
+  if(task.repeat==='weekly'){
+    var td=new Date(beforeDate);var wd=td.getDay();var dd=new Date(task.date).getDay();
+    var diff=(wd-dd+7)%7;
+    td.setDate(td.getDate()-diff);
+    if(fmtDate(td)===beforeDate){td.setDate(td.getDate()-7)}
+    return fmtDate(td);
+  }
+  if(task.repeat==='monthly'){
+    var d=new Date(beforeDate);
+    var day=new Date(task.date).getDate();
+    if(d.getDate()===day){d.setMonth(d.getMonth()-1)}
+    while(new Date(d.getFullYear(),d.getMonth(),day).getDate()!==day){d.setMonth(d.getMonth()-1)}
+    return fmtDate(new Date(d.getFullYear(),d.getMonth(),day));
+  }
+  return task.date;
+}
+function getCompletedTasksOnDate(dateStr){
+  var result=[];
+  state.tasks.forEach(function(t){
+    if(t.repeat==='none'||!t.repeat){
+      if(t.completed&&t.completedDate===dateStr)result.push(t);
+    } else {
+      if(t.completedDates&&t.completedDates.indexOf(dateStr)>=0)result.push(t);
+    }
+  });
+  return result;
+}
+function isDayAllDone(dateStr){
+  var scheduled=state.tasks.filter(function(x){return taskOnDate(x,dateStr)});
+  if(scheduled.length===0)return false;
+  return scheduled.every(function(x){return isTaskDoneOnDate(x,dateStr)});
+}
+async function fetchNews(){
+  if(state.newsLoading)return;
+  state.newsLoading=true;state.newsError=null;
+  if(!state.newsData)state.newsData={};
+  renderNews();
+  var src=NEWS_SOURCES.find(function(s){return s.key===state.currentNewsSource});
+  if(!src){state.newsLoading=false;return}
+  if(state.newsData[src.key]&&state.newsData[src.key].length>0){
+    state.newsLoading=false;renderNews();return;
+  }
+  var urls=[
+    src.url,
+    'https://api.allorigins.win/raw?url='+encodeURIComponent(src.url),
+    'https://corsproxy.io/?url='+encodeURIComponent(src.url)
+  ];
+  var success=false;
+  for(var i=0;i<urls.length&&!success;i++){
+    try{
+      var fo={};
+      if(typeof AbortSignal!=='undefined'&&AbortSignal.timeout)fo.signal=AbortSignal.timeout(8000);
+      var resp=await fetch(urls[i],fo);
+      var data=await resp.json();
+      var items=[];
+      if(Array.isArray(data)){items=data}
+      else if(data&&Array.isArray(data.data)){items=data.data}
+      items=items.slice(0,15).map(function(it){
+        return{title:it.title||'',hot:it.hot!=null?formatHot(it.hot):'',url:it.url||it.mobileUrl||'#'}
+      });
+      if(items.length>0){
+        state.newsData[src.key]=items;
+        success=true;
+      }
+    }catch(e){
+      console.log('News fetch attempt '+(i+1)+' failed:',e.message);
+    }
+  }
+  if(!success)state.newsError='加载失败，请稍后重试';
+  state.newsLoading=false;
+  renderNews();
+}
+function formatHot(h){
+  if(typeof h==='string')return h;
+  if(h>=100000000)return (h/100000000).toFixed(1)+'亿';
+  if(h>=10000)return (h/10000).toFixed(1)+'万';
+  return String(h);
+}
 
 function render(){
   renderTopbar();renderSidebar();renderMain();renderRightPanel();renderMobileTabs();
@@ -326,6 +481,7 @@ function renderTopbar(){
 function renderSidebar(){
   document.querySelectorAll('.nav-item').forEach(function(el){el.classList.remove('active')});
   if(state.currentView==='today'){document.querySelector('[data-view="today"]').classList.add('active')}
+  else if(state.currentView==='history'){document.querySelector('[data-view="history"]').classList.add('active')}
   else if(state.currentView==='calendar'){document.querySelector('[data-view="calendar"]').classList.add('active')}
   else if(state.currentView==='module'){
     if(state.currentCategory){var el=document.querySelector('[data-category="'+state.currentCategory+'"]');if(el)el.classList.add('active')}
@@ -335,6 +491,7 @@ function renderSidebar(){
 function renderMobileTabs(){
   var tab='today';
   if(state.currentView==='calendar')tab='calendar';
+  else if(state.currentView==='history')tab='history';
   else if(state.currentView==='module'&&state.currentModule)tab=state.currentModule;
   document.querySelectorAll('.mobile-tab').forEach(function(el){el.classList.toggle('active',el.dataset.tab===tab)});
 }
@@ -354,6 +511,7 @@ function getFilteredTasks(){
 }
 function getViewTitle(){
   if(state.currentView==='today')return '今日待办';
+  if(state.currentView==='history')return '历史遗留任务';
   if(state.currentView==='calendar'&&state.selectedDate){var d=new Date(state.selectedDate);return(d.getMonth()+1)+'月'+d.getDate()+'日待办'}
   if(state.currentView==='module'){
     if(state.currentCategory)return MODULES[state.currentModule].categories[state.currentCategory];
@@ -364,17 +522,33 @@ function getViewTitle(){
 function renderTaskCard(task,dateStr){
   var cn=MODULES[task.module].categories[task.category]||'';
   var tc='tag-'+task.module;
-  var meta='';
   var done=isTaskDoneOnDate(task,dateStr);
-  if(task.priority==='high'&&!done)meta+='<span class="task-meta urgent">高优先</span>';
-  if(task.time)meta+='<span class="task-meta">'+task.time+'</span>';
-  if(task.repeat!=='none'){var rm={daily:'每日',weekly:'每周',monthly:'每月'};var rp=rm[task.repeat];if(task.repeatEndDate)rp+='至'+task.repeatEndDate;meta+='<span class="task-meta">'+rp+'</span>'}
-  return '<div class="task-card'+(done?' done':'')+'" data-module="'+task.module+'">'+
+  var todayStr=getTodayStr();
+  var html='<div class="task-card'+(done?' done':'')+'" data-module="'+task.module+'">'+
+    '<div class="task-card-row1">'+
     '<input type="checkbox" class="task-checkbox" data-id="'+task.id+'" '+(done?'checked':'')+' />'+
     '<span class="task-tag '+tc+'">'+cn+'</span>'+
-    '<span class="task-title">'+esc(task.title)+'</span>'+meta+
+    '<span class="task-title">'+esc(task.title)+'</span>'+
     '<button class="task-edit" data-id="'+task.id+'">✎</button>'+
     '<button class="task-delete" data-id="'+task.id+'">&times;</button></div>';
+  var info='<div class="task-card-info">';
+  if(task.repeat==='none'||!task.repeat){
+    var d=new Date(task.date);
+    info+='<span class="task-meta task-meta-date">📅 '+(d.getMonth()+1)+'月'+d.getDate()+'日</span>';
+    if(!done&&task.date<todayStr){
+      var daysOd=Math.floor((new Date(todayStr)-new Date(task.date))/(86400000));
+      info+='<span class="task-meta task-meta-overdue">⚠ 逾期'+daysOd+'天</span>';
+    }
+  } else {
+    var rm={daily:'每日',weekly:'每周',monthly:'每月'};
+    var rp=rm[task.repeat];
+    if(task.repeatEndDate)rp+='至'+task.repeatEndDate;
+    info+='<span class="task-meta">🔁 '+rp+'</span>';
+  }
+  if(task.time)info+='<span class="task-meta">⏰ '+task.time+'</span>';
+  if(task.priority==='high'&&!done)info+='<span class="task-meta urgent">高优先</span>';
+  info+='</div>';
+  return html+info+'</div>';
 }
 function bindTaskEvents(c){
   var vd=getViewDate();
@@ -385,6 +559,7 @@ function bindTaskEvents(c){
 function renderMain(){
   var main=document.getElementById('mainContent');
   if(state.currentView==='calendar'){renderCalendarMain(main);return}
+  if(state.currentView==='history'){renderHistoricalMain(main);return}
   var tasks=getFilteredTasks();
   var title=getViewTitle();
   var chips='';
@@ -394,7 +569,6 @@ function renderMain(){
     Object.keys(mod.categories).forEach(function(k){chips+='<span class="filter-chip'+(state.currentCategory===k?' active':'')+'" data-fcat="'+k+'">'+mod.categories[k]+'</span>'});
     chips+='</div>';
   }
-  var colorMap={work:'var(--blue-600)',children:'var(--teal-600)',life:'var(--coral-600)'};
   var html='<div class="section-title">'+title+'<span style="font-size:12px;font-weight:400;color:var(--text-3)">'+tasks.length+'项</span></div>'+chips;
   if(tasks.length===0){
     html+='<div class="empty-state"><div class="empty-state-title">暂无任务</div><div style="font-size:12px">点击"添加任务"创建新任务</div></div>';
@@ -403,25 +577,120 @@ function renderMain(){
     tasks.forEach(function(t){html+=renderTaskCard(t,vd)});
   }
   if(state.currentView==='today'){
+    var overdue=getOverdueTasks();
+    if(overdue.length>0){
+      html+='<div class="overdue-section"><div class="section-title">⚠️ 历史遗留任务<span style="font-size:12px;font-weight:400;color:var(--text-3)">'+overdue.length+'项待处理</span></div>';
+      html+='<div class="historical-list">';
+      overdue.forEach(function(t){
+        var od=t._overdueDate||t.date;
+        html+=renderTaskCard(t,od);
+      });
+      html+='</div></div>';
+    }
     var ts2=getTodayStr();
     var tt=state.tasks.filter(function(x){return taskOnDate(x,ts2)});
     var dn=tt.filter(function(x){return isTaskDoneOnDate(x,ts2)}).length;
     var r=tt.length>0?Math.round(dn/tt.length*100):0;
     var fillCls=r>=100?'complete':'';
     html+='<div class="progress-section"><div class="progress-header"><span class="progress-label">今日完成进度</span><span class="progress-percent">'+r+'<span class="progress-total">%</span></span></div><div class="progress-track"><div class="progress-fill '+fillCls+'" style="width:'+r+'%"></div></div><div class="progress-info"><span class="done">'+dn+' 已完成</span><span>共 '+tt.length+' 项</span></div></div>';
+    html+=renderNewsHTML();
   }
   main.innerHTML=html;
   bindTaskEvents(main);
   main.querySelectorAll('.filter-chip').forEach(function(chip){chip.addEventListener('click',function(){state.currentCategory=chip.dataset.fcat||null;render()})});
+  if(state.currentView==='today'){
+    bindNewsEvents(main);
+    if(!state.newsData||!state.newsData[state.currentNewsSource]){fetchNews()}
+    else renderNews();
+  }
+}
+function renderHistoricalMain(main){
+  var overdue=getOverdueTasks();
+  var todayStr=getTodayStr();
+  var html='<div class="section-title">历史遗留任务<span style="font-size:12px;font-weight:400;color:var(--text-3)">'+overdue.length+'项待处理</span></div>';
+  if(overdue.length===0){
+    html+='<div class="empty-state"><div class="empty-state-title">没有遗留任务 🎉</div><div style="font-size:12px">所有过期任务都已完成</div></div>';
+  } else {
+    html+='<div class="historical-list">';
+    overdue.forEach(function(t){
+      var od=t._overdueDate||t.date;
+      html+=renderTaskCard(t,od);
+    });
+    html+='</div>';
+  }
+  main.innerHTML=html;
+  bindTaskEvents(main);
+}
+function renderNewsHTML(){
+  var tabsHTML=NEWS_SOURCES.map(function(s){
+    return '<span class="news-tab'+(state.currentNewsSource===s.key?' active':'')+'" data-news-source="'+s.key+'">'+s.name+'</span>';
+  }).join('');
+  return '<div class="news-section">'+
+    '<div class="news-header"><div class="news-title">📰 今日新闻热点</div>'+
+    '<button class="news-refresh" id="newsRefresh">刷新</button></div>'+
+    '<div class="news-tabs">'+tabsHTML+'</div>'+
+    '<div class="news-list" id="newsList"><div class="news-loading">加载中...</div></div>'+
+    '</div>';
+}
+function renderNews(){
+  var el=document.getElementById('newsList');
+  if(!el)return;
+  if(state.newsLoading){
+    el.innerHTML='<div class="news-loading">加载中...</div>';return;
+  }
+  if(state.newsError){
+    el.innerHTML='<div class="news-error">'+state.newsError+' <button class="news-refresh" onclick="fetchNews()">重试</button></div>';return;
+  }
+  var data=state.newsData&&state.newsData[state.currentNewsSource];
+  if(!data||data.length===0){
+    el.innerHTML='<div class="news-loading">暂无数据</div>';return;
+  }
+  el.innerHTML=data.map(function(it,idx){
+    return '<a class="news-item" href="'+esc(it.url)+'" target="_blank" rel="noopener">'+
+      '<span class="news-rank">'+(idx+1)+'</span>'+
+      '<span class="news-item-title">'+esc(it.title)+'</span>'+
+      (it.hot?'<span class="news-item-hot">'+esc(it.hot)+'</span>':'')+
+      '</a>';
+  }).join('');
+}
+function bindNewsEvents(container){
+  container.querySelectorAll('.news-tab').forEach(function(tab){
+    tab.addEventListener('click',function(){
+      state.currentNewsSource=tab.dataset.newsSource;
+      container.querySelectorAll('.news-tab').forEach(function(t){t.classList.toggle('active',t===tab)});
+      if(!state.newsData||!state.newsData[state.currentNewsSource]){fetchNews()}
+      else renderNews();
+    });
+  });
+  var refreshBtn=container.querySelector('#newsRefresh');
+  if(refreshBtn){
+    refreshBtn.addEventListener('click',function(){
+      if(state.newsData)delete state.newsData[state.currentNewsSource];
+      fetchNews();
+    });
+  }
 }
 function renderCalendarMain(main){
   if(state.selectedDate){
     var tasks=state.tasks.filter(function(x){return taskOnDate(x,state.selectedDate)});
+    var completedTasks=getCompletedTasksOnDate(state.selectedDate);
     var po={high:0,medium:1,low:2};
     tasks.sort(function(a,b){if(a.completed!==b.completed)return a.completed?1:-1;if(po[a.priority]!==po[b.priority])return po[a.priority]-po[b.priority];return(a.time||'99:99').localeCompare(b.time||'99:99')});
     var d=new Date(state.selectedDate);
     var html='<div class="section-title">'+(d.getMonth()+1)+'月'+d.getDate()+'日待办<span style="font-size:12px;font-weight:400;color:var(--text-3)">'+tasks.length+'项</span><button class="btn-add" style="margin-left:auto;font-size:12px;padding:4px 10px" id="btnBackCal">返回日历</button></div>';
     if(tasks.length===0){html+='<div class="empty-state"><div class="empty-state-title">该日暂无任务</div></div>'}else{tasks.forEach(function(t){html+=renderTaskCard(t,state.selectedDate)})}
+    if(completedTasks.length>0){
+      html+='<div class="completed-day-header">✅ 当天已完成 '+completedTasks.length+' 项</div>';
+      completedTasks.forEach(function(t){
+        var done=true;
+        html+='<div class="task-card done" data-module="'+t.module+'">'+
+          '<div class="task-card-row1">'+
+          '<input type="checkbox" class="task-checkbox" data-id="'+t.id+'" checked />'+
+          '<span class="task-tag tag-'+t.module+'">'+(MODULES[t.module].categories[t.category]||'')+'</span>'+
+          '<span class="task-title">'+esc(t.title)+'</span>'+
+          '</div></div>';
+      });
+    }
     main.innerHTML=html;
     bindTaskEvents(main);
     document.getElementById('btnBackCal').addEventListener('click',function(){state.selectedDate=null;render()});
@@ -439,8 +708,10 @@ function renderCalendarMain(main){
   for(var day=1;day<=daysInMonth;day++){
     var ds=year+'-'+String(month+1).padStart(2,'0')+'-'+String(day).padStart(2,'0');
     var has=state.tasks.some(function(x){return taskOnDate(x,ds)});
-    var cls='calendar-day'+(ds===todayStr?' today':'')+(has?' has-tasks':'');
-    html+='<div class="'+cls+'" data-date="'+ds+'">'+day+'</div>';
+    var allDone=isDayAllDone(ds);
+    var hasCompleted=getCompletedTasksOnDate(ds).length>0;
+    var cls='calendar-day'+(ds===todayStr?' today':'')+(has?' has-tasks':'')+(allDone?' all-done':'');
+    html+='<div class="'+cls+'" data-date="'+ds+'">'+day+(hasCompleted?'<div class="day-done-count">✓</div>':'')+'</div>';
   }
   var total=firstDay+daysInMonth;var rem=(7-total%7)%7;
   for(var day2=1;day2<=rem;day2++)html+='<div class="calendar-day other-month">'+day2+'</div>';
@@ -481,7 +752,10 @@ function renderRightPanel(){
 function toggleTask(id,dateStr){
   var t=state.tasks.find(function(x){return x.id===id});
   if(!t)return;
-  if(t.repeat==='none'||!t.repeat){t.completed=!t.completed}
+  if(t.repeat==='none'||!t.repeat){
+    t.completed=!t.completed;
+    if(t.completed){t.completedDate=getTodayStr()}else{t.completedDate=null}
+  }
   else{
     if(!t.completedDates)t.completedDates=[];
     var idx=t.completedDates.indexOf(dateStr);
@@ -549,7 +823,7 @@ function saveTask(){
     state.tasks.push({
       id:Date.now(),title:title,module:modalState.module,category:document.getElementById('taskCategory').value,
       priority:modalState.priority,date:document.getElementById('taskDate').value,time:document.getElementById('taskTime').value,
-      repeat:modalState.repeat,completed:false,note:document.getElementById('taskNote').value.trim(),
+      repeat:modalState.repeat,completed:false,completedDate:null,note:document.getElementById('taskNote').value.trim(),
       completedDates:[],repeatEndDate:document.getElementById('taskRepeatEndDate').value||null
     });
   }
@@ -570,7 +844,7 @@ function init(){
   document.querySelectorAll('.mobile-tab').forEach(function(el){
     el.addEventListener('click',function(){
       var t=el.dataset.tab;
-      if(t==='today')switchView('today');else if(t==='calendar')switchView('calendar');else switchView('module',t);
+      if(t==='today')switchView('today');else if(t==='history')switchView('history');else if(t==='calendar')switchView('calendar');else switchView('module',t);
     });
   });
   document.getElementById('fab').addEventListener('click',openModal);
