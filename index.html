@@ -109,6 +109,17 @@ body{font-family:var(--font);font-size:14px;color:var(--text);background:var(--b
 .date-filter-chip:hover:not(.active){background:var(--surface-3)}
 .date-filter-picker{font-size:13px;padding:4px 8px;border:1px solid var(--border);border-radius:var(--radius);font-family:var(--font);color:var(--text-2);max-width:150px}
 .date-filter-picker:focus{outline:none;border-color:var(--blue-400)}
+/* Delete confirm popup for recurring tasks */
+.delete-confirm-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.35);z-index:200;display:flex;align-items:center;justify-content:center;animation:fadeIn .15s}
+.delete-confirm-popup{background:var(--surface);border-radius:var(--radius-lg);padding:20px 24px;max-width:320px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,.18);text-align:center}
+.delete-confirm-popup .dcp-title{font-size:14px;font-weight:500;margin-bottom:6px}
+.delete-confirm-popup .dcp-sub{font-size:12px;color:var(--text-3);margin-bottom:16px;line-height:1.5}
+.delete-confirm-popup .dcp-btns{display:flex;gap:10px}
+.delete-confirm-popup .dcp-btn{flex:1;padding:10px 0;border:none;border-radius:8px;font-size:13px;cursor:pointer;font-weight:500;transition:opacity .15s}
+.delete-confirm-popup .dcp-btn:hover{opacity:.85}
+.dcp-btn-skip{background:var(--blue-50);color:var(--blue-700)}
+.dcp-btn-cancel{background:var(--red-50);color:var(--red-700)}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
 .year-selector{display:flex;align-items:center;gap:8px;margin-bottom:16px;flex-wrap:wrap}
 .yr-btn{border:1px solid var(--border);background:var(--surface);border-radius:var(--radius);padding:5px 12px;cursor:pointer;font-size:12px;color:var(--text-2);font-family:var(--font)}
 .yr-btn:hover{background:var(--surface-3)}
@@ -393,7 +404,7 @@ var MODULES = {
   children:{name:'孩子',color:'teal',categories:{study:'学习管理',exercise:'运动健康',diet:'饮食作息'}},
   life:{name:'生活',color:'coral',categories:{dance:'跳舞',fitness:'健身',travel:'出游'}}
 };
-var state = {tasks:[],plans:[],currentView:'today',currentModule:null,currentCategory:null,calendarDate:new Date(),selectedDate:null,newsData:null,newsLoading:false,currentNewsSource:'toutiao',newsError:null,moduleDateFilter:'today',moduleCustomDate:null,planYear:new Date().getFullYear(),planEditId:null,planEditMode:'add'};
+var state = {tasks:[],plans:[],currentView:'today',currentModule:null,currentCategory:null,calendarDate:new Date(),selectedDate:null,newsData:null,newsLoading:false,currentNewsSource:'toutiao',newsError:null,moduleDateFilter:'today',moduleCustomDate:null,planYear:new Date().getFullYear(),planEditId:null,planEditMode:'add',deleteConfirmTaskId:null,deleteConfirmTaskTitle:'',deleteConfirmDate:''};
 var modalState = {module:'work',priority:'medium',repeat:'none',editingId:null};
 var NEWS_SOURCES = [
   {key:'toutiao',name:'头条热点',url:'https://dailyhotapi.3yu3.top/toutiao'},
@@ -409,6 +420,7 @@ function loadData(){
     state.tasks.forEach(function(t){
       if(t.completed&&!t.completedDate)t.completedDate=t.date;
       if(!t.completedDates)t.completedDates=[];
+      if(!t.skippedDates)t.skippedDates=[];
     });
   } else {
     initSampleData();
@@ -565,6 +577,7 @@ function getWeekday(d){var w=['日','一','二','三','四','五','六'];return 
 function esc(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML}
 function taskOnDate(task,dateStr){
   if(task.repeat==='none'||!task.repeat)return task.date===dateStr;
+  if(task.skippedDates&&task.skippedDates.indexOf(dateStr)>=0)return false;
   if(task.date>dateStr)return false;
   if(task.repeatEndDate&&task.repeatEndDate<dateStr)return false;
   if(task.repeat==='daily')return true;
@@ -1126,7 +1139,56 @@ function toggleTask(id,dateStr){
   }
   saveData();render();
 }
-function deleteTask(id){state.tasks=state.tasks.filter(function(x){return x.id!==id});saveData();render()}
+function deleteTask(id){
+  var t=state.tasks.find(function(x){return x.id===id});
+  if(!t)return;
+  if(t.repeat&&t.repeat!=='none'){
+    state.deleteConfirmTaskId=id;
+    state.deleteConfirmTaskTitle=t.title;
+    state.deleteConfirmDate=getViewDate();
+    showDeleteConfirmPopup();
+    return;
+  }
+  state.tasks=state.tasks.filter(function(x){return x.id!==id});
+  saveData();render();
+}
+function skipRecurringOnDate(taskId,dateStr){
+  var t=state.tasks.find(function(x){return x.id===taskId});
+  if(!t)return;
+  if(!t.skippedDates)t.skippedDates=[];
+  t.skippedDates.push(dateStr);
+  if(t.completedDates){t.completedDates=t.completedDates.filter(function(d){return d!==dateStr})}
+  saveData();render();
+}
+function showDeleteConfirmPopup(){
+  var rm={daily:'每日',weekly:'每周',monthly:'每月'};
+  var rn=rm[state.tasks.find(function(x){return x.id===state.deleteConfirmTaskId}).repeat]||'重复';
+  var html='<div class="delete-confirm-overlay" id="deleteConfirmOverlay">';
+  html+='<div class="delete-confirm-popup">';
+  html+='<div class="dcp-title">删除「'+esc(state.deleteConfirmTaskTitle)+'」</div>';
+  html+='<div class="dcp-sub">此任务为"'+rn+'"重复，你想怎么处理？</div>';
+  html+='<div class="dcp-btns">';
+  html+='<button class="dcp-btn dcp-btn-skip" id="dcpSkipBtn">仅删除今天</button>';
+  html+='<button class="dcp-btn dcp-btn-cancel" id="dcpCancelAllBtn">取消整个重复任务</button>';
+  html+='</div></div></div>';
+  document.body.insertAdjacentHTML('beforeend',html);
+  document.getElementById('dcpSkipBtn').addEventListener('click',function(){
+    skipRecurringOnDate(state.deleteConfirmTaskId,state.deleteConfirmDate);
+    removeDeleteConfirmPopup();
+  });
+  document.getElementById('dcpCancelAllBtn').addEventListener('click',function(){
+    state.tasks=state.tasks.filter(function(x){return x.id!==state.deleteConfirmTaskId});
+    saveData();removeDeleteConfirmPopup();render();
+  });
+  document.getElementById('deleteConfirmOverlay').addEventListener('click',function(e){
+    if(e.target===document.getElementById('deleteConfirmOverlay'))removeDeleteConfirmPopup();
+  });
+}
+function removeDeleteConfirmPopup(){
+  var el=document.getElementById('deleteConfirmOverlay');
+  if(el)el.remove();
+  state.deleteConfirmTaskId=null;
+}
 function switchView(view,module,category){
   state.currentView=view;state.currentModule=module||null;state.currentCategory=category||null;state.selectedDate=null;
   if(view==='module'){state.moduleDateFilter='today';state.moduleCustomDate=null}
@@ -1190,7 +1252,7 @@ function saveTask(){
       id:Date.now(),title:title,module:modalState.module,category:document.getElementById('taskCategory').value,
       priority:modalState.priority,date:document.getElementById('taskDate').value,time:document.getElementById('taskTime').value,
       repeat:modalState.repeat,completed:false,completedDate:null,note:document.getElementById('taskNote').value.trim(),
-      completedDates:[],repeatEndDate:document.getElementById('taskRepeatEndDate').value||null
+      completedDates:[],skippedDates:[],repeatEndDate:document.getElementById('taskRepeatEndDate').value||null
     });
   }
   saveData();closeModal();render();
