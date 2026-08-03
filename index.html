@@ -814,8 +814,9 @@ function getViewTitle(){
   return '任务列表';
 }
 function renderTaskCard(task,dateStr){
-  var cn=MODULES[task.module].categories[task.category]||'';
-  var tc='tag-'+task.module;
+  var mod=MODULES[task.module];
+  var cn=(mod&&mod.categories[task.category])||mod&&mod.name||task.module||'';
+  var tc='tag-'+(task.module||'');
   var done=isTaskDoneOnDate(task,dateStr);
   var todayStr=getTodayStr();
   var html='<div class="task-card'+(done?' done':'')+'" data-module="'+task.module+'">'+
@@ -1062,7 +1063,7 @@ function renderCalendarMain(main){
         html+='<div class="task-card done" data-module="'+t.module+'">'+
           '<div class="task-card-row1">'+
           '<input type="checkbox" class="task-checkbox" data-id="'+t.id+'" checked />'+
-          '<span class="task-tag tag-'+t.module+'">'+(MODULES[t.module].categories[t.category]||'')+'</span>'+
+          '<span class="task-tag tag-'+(t.module||'')+'">'+((MODULES[t.module]&&MODULES[t.module].categories[t.category])||(MODULES[t.module]&&MODULES[t.module].name)||t.module||'')+'</span>'+
           '<span class="task-title">'+esc(t.title)+'</span>'+
           '</div></div>';
       });
@@ -1120,7 +1121,7 @@ function renderRightPanel(){
   h+='<div class="stat-card"><div class="stat-label" style="font-weight:600;margin-bottom:8px">模块分布</div><div class="stat-bar"><div style="flex:'+(ms.work||0)+';background:#378ADD"></div><div style="flex:'+(ms.children||0)+';background:#1D9E75"></div><div style="flex:'+(ms.life||0)+';background:#D85A30"></div></div><div class="stat-legend"><span style="color:#0C447C">工作 '+ms.work+'</span><span style="color:#085041">孩子 '+ms.children+'</span><span style="color:#712B13">生活 '+ms.life+'</span></div></div>';
   if(rem.length>0){
     h+='<div class="reminder-card"><div class="reminder-title">重要提醒</div>';
-    rem.forEach(function(r){var cn=MODULES[r.module].categories[r.category]||'';h+='<div class="reminder-item">'+cn+' &middot; '+esc(r.title)+(r.time?' '+r.time:'')+'</div>'});
+    rem.forEach(function(r){var rm=MODULES[r.module];var cn=(rm&&rm.categories[r.category])||(rm&&rm.name)||r.module||'';h+='<div class="reminder-item">'+cn+' &middot; '+esc(r.title)+(r.time?' '+r.time:'')+'</div>'});
     h+='</div>';
   }
   p.innerHTML=h;
