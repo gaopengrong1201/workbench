@@ -109,6 +109,40 @@ body{font-family:var(--font);font-size:14px;color:var(--text);background:var(--b
 .date-filter-chip:hover:not(.active){background:var(--surface-3)}
 .date-filter-picker{font-size:13px;padding:4px 8px;border:1px solid var(--border);border-radius:var(--radius);font-family:var(--font);color:var(--text-2);max-width:150px}
 .date-filter-picker:focus{outline:none;border-color:var(--blue-400)}
+.year-selector{display:flex;align-items:center;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+.yr-btn{border:1px solid var(--border);background:var(--surface);border-radius:var(--radius);padding:5px 12px;cursor:pointer;font-size:12px;color:var(--text-2);font-family:var(--font)}
+.yr-btn:hover{background:var(--surface-3)}
+.yr-label{font-size:15px;font-weight:600;color:var(--text)}
+.yr-add{margin-left:auto;border-color:var(--blue-400);color:var(--blue-600)}
+.yr-add:hover{background:var(--blue-50)}
+.plan-card{border:1px solid var(--border);border-radius:var(--radius-lg);background:var(--surface);padding:12px 14px;margin-bottom:10px}
+.plan-card.ylevel{border-left:4px solid var(--blue-600);background:var(--blue-50)}
+.plan-card.mlevel{border-left:4px solid var(--teal-600);background:var(--teal-50)}
+.plan-card.wlevel{border-left:4px solid var(--coral-400);background:var(--coral-50)}
+.plan-row{display:flex;align-items:center;gap:8px}
+.plan-toggle-arrow{font-size:10px;color:var(--text-3);cursor:pointer;padding:2px;min-width:16px;text-align:center;border:none;background:none;font-family:var(--font)}
+.plan-title{font-size:13px;font-weight:500;color:var(--text);flex:1}
+.plan-status{font-size:11px;padding:2px 8px;border-radius:10px;font-weight:500;flex-shrink:0}
+.plan-status.done{background:var(--teal-100);color:var(--teal-800)}
+.plan-status.prog{background:var(--blue-100);color:var(--blue-800)}
+.plan-status.pend{background:var(--gray-100);color:var(--text-2)}
+.plan-desc{font-size:12px;color:var(--text-2);line-height:1.5;margin-top:6px;white-space:pre-wrap}
+.plan-progress{display:flex;align-items:center;gap:8px;margin-top:10px}
+.plan-track{flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden}
+.plan-fill{height:6px;background:var(--teal-400);border-radius:3px;transition:width .3s}
+.plan-pct{font-size:11px;color:var(--text-2);min-width:36px}
+.plan-edit,.plan-delete{font-size:14px;cursor:pointer;border:none;background:none;color:var(--text-3);padding:2px 4px;font-family:var(--font);flex-shrink:0}
+.plan-edit:hover{color:var(--blue-600)}
+.plan-delete:hover{color:var(--red-600)}
+.plan-add-child{font-size:12px;color:var(--text-3);padding:6px 0 6px 24px;cursor:pointer;border:none;background:none;font-family:var(--font);display:block;width:100%;text-align:left}
+.plan-add-child:hover{color:var(--blue-600)}
+.plan-modal{padding-top:0}
+.plan-modal .form-group{margin-bottom:12px}
+.plan-modal .form-group label{font-size:12px;color:var(--text-2);display:block;margin-bottom:4px}
+.plan-modal input,.plan-modal textarea,.plan-modal select{width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:var(--radius);font-size:14px;font-family:var(--font);color:var(--text)}
+.plan-modal textarea{min-height:80px;resize:vertical}
+.plan-modal .form-row{display:flex;gap:8px}
+.plan-modal .form-row>*{flex:1}
 .fab{display:none;position:fixed;bottom:90px;right:20px;width:56px;height:56px;border-radius:50%;background:var(--blue-600);color:#fff;border:none;cursor:pointer;z-index:100;font-family:var(--font);box-shadow:0 4px 12px rgba(24,95,165,.35);align-items:center;justify-content:center;transition:transform .15s,box-shadow .15s}
 .fab:active{transform:scale(.92);box-shadow:0 2px 8px rgba(24,95,165,.3)}
 .mobile-tabs{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--border);z-index:100;padding-bottom:env(safe-area-inset-bottom)}
@@ -227,6 +261,8 @@ textarea.form-input{resize:vertical;min-height:40px}
     <div class="nav-item" data-module="life" data-category="dance">跳舞</div>
     <div class="nav-item" data-module="life" data-category="fitness">健身</div>
     <div class="nav-item" data-module="life" data-category="travel">出游</div>
+    <div class="nav-header"><span class="nav-dot" style="background:#7F77DD"></span>计划</div>
+    <div class="nav-item" data-view="plan">年度计划</div>
   </div>
   <div class="main" id="mainContent"></div>
   <div class="right-panel" id="rightPanel"></div>
@@ -234,7 +270,7 @@ textarea.form-input{resize:vertical;min-height:40px}
 <button class="fab" id="fab"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
 <div class="mobile-tabs">
   <div class="mobile-tab active" data-tab="today"><span class="mobile-tab-icon">📋</span>今日</div>
-  <div class="mobile-tab" data-tab="history"><span class="mobile-tab-icon">⚠️</span>遗留</div>
+  <div class="mobile-tab" data-tab="plan"><span class="mobile-tab-icon">📋</span>计划</div>
   <div class="mobile-tab" data-tab="work"><span class="mobile-tab-icon">💼</span>工作</div>
   <div class="mobile-tab" data-tab="children"><span class="mobile-tab-icon">🎒</span>孩子</div>
   <div class="mobile-tab" data-tab="life"><span class="mobile-tab-icon">🌸</span>生活</div>
@@ -300,14 +336,64 @@ textarea.form-input{resize:vertical;min-height:40px}
     </div>
   </div>
 </div>
+<div class="modal-overlay" id="planModalOverlay">
+  <div class="modal plan-modal">
+    <div class="modal-title" id="planModalTitle">添加计划</div>
+    <div class="form-group">
+      <label>计划层级</label>
+      <select id="planType"><option value="year">年度计划</option><option value="month">月度计划</option><option value="week">周计划</option></select>
+    </div>
+    <div class="form-group">
+      <label>标题</label>
+      <input type="text" id="planTitle" placeholder="计划标题..." />
+    </div>
+    <div class="form-group">
+      <label>详细描述(可选)</label>
+      <textarea id="planContent" placeholder="详细计划描述..."></textarea>
+    </div>
+    <div class="form-row">
+      <div class="form-group" id="planYearGroup">
+        <label>年份</label>
+        <input type="number" id="planYear" value="2026" min="2020" max="2100" />
+      </div>
+      <div class="form-group" id="planMonthGroup" style="display:none">
+        <label>月份</label>
+        <select id="planMonth"><option value="1">1月</option><option value="2">2月</option><option value="3">3月</option><option value="4">4月</option><option value="5">5月</option><option value="6">6月</option><option value="7">7月</option><option value="8">8月</option><option value="9">9月</option><option value="10">10月</option><option value="11">11月</option><option value="12">12月</option></select>
+      </div>
+    </div>
+    <div class="form-group" id="planWeekGroup" style="display:none">
+      <label>周一起始日期</label>
+      <input type="date" id="planWeekStart" />
+    </div>
+    <div class="form-group" id="planParentGroup" style="display:none">
+      <label>所属计划</label>
+      <input type="text" id="planParentDisplay" disabled style="background:var(--surface-2)" />
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>状态</label>
+        <select id="planStatus"><option value="pending">未开始</option><option value="in_progress">进行中</option><option value="done">已完成</option></select>
+      </div>
+      <div class="form-group" id="planProgressGroup">
+        <label>进度(%)</label>
+        <input type="number" id="planProgress" value="0" min="0" max="100" />
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" id="btnPlanCancel">取消</button>
+      <button class="btn-save" id="btnSavePlan">保存</button>
+    </div>
+  </div>
+</div>
 <script>
 var STORAGE_KEY = 'gaoxiaorong_workbench_v1';
+var PLANS_STORAGE_KEY = 'gaoxiaorong_workbench_plans_v1';
 var MODULES = {
   work:{name:'工作',color:'blue',categories:{fulltime:'全职工作',sidejob:'兼职副业',startup:'Claw创业'}},
   children:{name:'孩子',color:'teal',categories:{study:'学习管理',exercise:'运动健康',diet:'饮食作息'}},
   life:{name:'生活',color:'coral',categories:{dance:'跳舞',fitness:'健身',travel:'出游'}}
 };
-var state = {tasks:[],currentView:'today',currentModule:null,currentCategory:null,calendarDate:new Date(),selectedDate:null,newsData:null,newsLoading:false,currentNewsSource:'toutiao',newsError:null,moduleDateFilter:'today',moduleCustomDate:null};
+var state = {tasks:[],plans:[],currentView:'today',currentModule:null,currentCategory:null,calendarDate:new Date(),selectedDate:null,newsData:null,newsLoading:false,currentNewsSource:'toutiao',newsError:null,moduleDateFilter:'today',moduleCustomDate:null,planYear:new Date().getFullYear(),planEditId:null,planEditMode:'add'};
 var modalState = {module:'work',priority:'medium',repeat:'none',editingId:null};
 var NEWS_SOURCES = [
   {key:'toutiao',name:'头条热点',url:'https://dailyhotapi.3yu3.top/toutiao'},
@@ -327,9 +413,136 @@ function loadData(){
   } else {
     initSampleData();
   }
+  loadPlans();
 }
 function saveData(){
   localStorage.setItem(STORAGE_KEY, JSON.stringify({tasks:state.tasks}));
+}
+function loadPlans(){
+  var raw=localStorage.getItem(PLANS_STORAGE_KEY);
+  if(raw){try{state.plans=JSON.parse(raw)}catch(e){state.plans=[]}} else state.plans=[];
+}
+function savePlans(){localStorage.setItem(PLANS_STORAGE_KEY, JSON.stringify(state.plans));}
+function getWeekStart(d){
+  var day=d.getDay();var diff=d.getDate()-day+(day===0?-6:1);
+  var m=new Date(d);m.setDate(diff);return m;
+}
+function fmtWeekLabel(start){
+  var end=new Date(start);end.setDate(start.getDate()+6);
+  var ms=start.getMonth()+1,es=end.getMonth()+1,ds=start.getDate(),de=end.getDate();
+  var weekNum=Math.ceil((start.getDate()-1+7)/7);
+  var firstDay=new Date(start.getFullYear(),start.getMonth(),1);
+  var firstMonday=new Date(firstDay);firstMonday.setDate(1-(firstDay.getDay()===0?6:firstDay.getDay()-1));
+  if(firstMonday>firstDay){var offset=firstMonday-firstDay;weekNum=Math.ceil((start-firstDay+1)/86400000/7)}
+  var mondayOfYear=new Date(start.getFullYear(),0,1);
+  var daysSinceMonday=(start-mondayOfYear)/86400000;
+  var firstMondayOfYear=new Date(mondayOfYear);firstMondayOfYear.setDate(1-(mondayOfYear.getDay()===0?6:mondayOfYear.getDay()-1));
+  var wk=Math.floor((start-firstMondayOfYear)/86400000/7)+1;
+  if(wk<1)wk=52;
+  return {label:'第'+wk+'周',start:fmtDate(start),end:fmtDate(end),range:ms+'/'+ds+'-'+es+'/'+de};
+}
+function addPlan(type,parentId,parentInfo){
+  state.planEditId=null;state.planEditMode='add';
+  state._planParentId=parentId||null;
+  state._planParentTitle=parentInfo||'';
+  document.getElementById('planType').value=type;
+  document.getElementById('planTitle').value='';
+  document.getElementById('planContent').value='';
+  document.getElementById('planYear').value=state.planYear;
+  document.getElementById('planStatus').value='pending';
+  document.getElementById('planProgress').value='0';
+  var now=new Date();
+  document.getElementById('planMonth').value=now.getMonth()+1;
+  var ws=getWeekStart(now);
+  document.getElementById('planWeekStart').value=fmtDate(ws);
+  var isYear=(type==='year'),isMonth=(type==='month');
+  document.getElementById('planType').disabled=(parentId!==null);
+  document.getElementById('planMonthGroup').style.display=isMonth?'block':'none';
+  document.getElementById('planWeekGroup').style.display=(type==='week')?'block':'none';
+  document.getElementById('planParentGroup').style.display=parentId?'block':'none';
+  document.getElementById('planParentDisplay').value=state._planParentTitle||'';
+  document.getElementById('planProgressGroup').style.display=(type==='week')?'none':'block';
+  document.getElementById('planModalTitle').textContent='添加'+(type==='year'?'年度':type==='month'?'月度':'周')+'计划';
+  document.getElementById('planModalOverlay').classList.add('show');
+}
+function editPlan(id){
+  var p=null;for(var i=0;i<state.plans.length;i++){if(state.plans[i].id===id){p=state.plans[i];break}}
+  if(!p)return;
+  state.planEditId=id;state.planEditMode='edit';
+  state._planParentId=p.parentId||null;
+  document.getElementById('planType').value=p.type;
+  document.getElementById('planType').disabled=true;
+  document.getElementById('planTitle').value=p.title;
+  document.getElementById('planContent').value=p.content||'';
+  document.getElementById('planYear').value=p.year;
+  document.getElementById('planStatus').value=p.status;
+  document.getElementById('planProgress').value=p.progress||0;
+  document.getElementById('planMonthGroup').style.display=(p.type==='month'||p.type==='week')?'block':'none';
+  document.getElementById('planWeekGroup').style.display=(p.type==='week')?'block':'none';
+  document.getElementById('planProgressGroup').style.display=(p.type==='week')?'none':'block';
+  if(p.type==='month'||p.type==='week')document.getElementById('planMonth').value=p.month||(new Date().getMonth()+1);
+  if(p.type==='week')document.getElementById('planWeekStart').value=p.weekStart||getTodayStr();
+  if(p.parentId){
+    var pp=null;for(var j=0;j<state.plans.length;j++){if(state.plans[j].id===p.parentId){pp=state.plans[j];break}}
+    document.getElementById('planParentGroup').style.display='block';
+    document.getElementById('planParentDisplay').value=pp?pp.title:'';
+  } else {
+    document.getElementById('planParentGroup').style.display='none';
+  }
+  document.getElementById('planModalTitle').textContent='编辑计划';
+  document.getElementById('planModalOverlay').classList.add('show');
+}
+function savePlan(){
+  var type=document.getElementById('planType').value;
+  var title=document.getElementById('planTitle').value.trim();
+  if(!title){alert('请输入计划标题');return}
+  var year=parseInt(document.getElementById('planYear').value)||state.planYear;
+  var plan={
+    id:state.planEditId||Date.now(),
+    type:type,
+    parentId:state._planParentId||null,
+    year:year,
+    month:null,
+    weekLabel:null,weekStart:null,weekEnd:null,
+    title:title,
+    content:document.getElementById('planContent').value.trim(),
+    status:document.getElementById('planStatus').value,
+    progress:type==='week'?0:parseInt(document.getElementById('planProgress').value)||0,
+    sortOrder:0,
+    expanded:true
+  };
+  if(type==='month'||type==='week'){
+    plan.month=parseInt(document.getElementById('planMonth').value);
+    plan.year=year;
+  }
+  if(type==='week'){
+    var ws=new Date(document.getElementById('planWeekStart').value);
+    var wl=fmtWeekLabel(ws);
+    plan.weekLabel=wl.label;plan.weekStart=wl.start;plan.weekEnd=wl.end;
+    plan.progress=0;
+  }
+  if(state.planEditId){
+    for(var i=0;i<state.plans.length;i++){if(state.plans[i].id===state.planEditId){Object.assign(state.plans[i],plan);break}}
+  } else {
+    state.plans.push(plan);
+  }
+  if(plan.parentId){var pp=null;for(var k=0;k<state.plans.length;k++){if(state.plans[k].id===plan.parentId){pp=state.plans[k];break}}if(pp){pp.expanded=true}}
+  savePlans();
+  closePlanModal();
+  render();
+}
+function deletePlan(id){
+  if(!confirm('确定删除此计划及其子计划吗？'))return;
+  state.plans=state.plans.filter(function(p){return p.id!==id&&p.parentId!==id});
+  savePlans();render();
+}
+function closePlanModal(){
+  document.getElementById('planModalOverlay').classList.remove('show');
+  state.planEditId=null;
+}
+function togglePlanExpand(id){
+  for(var i=0;i<state.plans.length;i++){if(state.plans[i].id===id){state.plans[i].expanded=!state.plans[i].expanded;break}}
+  savePlans();render();
 }
 function initSampleData(){
   var today = fmtDate(new Date());
@@ -543,6 +756,7 @@ function renderSidebar(){
   if(state.currentView==='today'){document.querySelector('[data-view="today"]').classList.add('active')}
   else if(state.currentView==='history'){document.querySelector('[data-view="history"]').classList.add('active')}
   else if(state.currentView==='calendar'){document.querySelector('[data-view="calendar"]').classList.add('active')}
+  else if(state.currentView==='plan'){var pel=document.querySelector('[data-view="plan"]');if(pel)pel.classList.add('active')}
   else if(state.currentView==='module'){
     if(state.currentCategory){var el=document.querySelector('[data-category="'+state.currentCategory+'"]');if(el)el.classList.add('active')}
     else if(state.currentModule){var el2=document.querySelector('[data-module-nav="'+state.currentModule+'"]');if(el2)el2.classList.add('active')}
@@ -552,6 +766,7 @@ function renderMobileTabs(){
   var tab='today';
   if(state.currentView==='calendar')tab='calendar';
   else if(state.currentView==='history')tab='history';
+  else if(state.currentView==='plan')tab='plan';
   else if(state.currentView==='module'&&state.currentModule)tab=state.currentModule;
   document.querySelectorAll('.mobile-tab').forEach(function(el){el.classList.toggle('active',el.dataset.tab===tab)});
 }
@@ -624,6 +839,7 @@ function bindTaskEvents(c){
 }
 function renderMain(){
   var main=document.getElementById('mainContent');
+  if(state.currentView==='plan'){renderPlanMain(main);return}
   if(state.currentView==='calendar'){renderCalendarMain(main);return}
   if(state.currentView==='history'){renderHistoricalMain(main);return}
   var tasks=getFilteredTasks();
@@ -698,6 +914,75 @@ function renderHistoricalMain(main){
   }
   main.innerHTML=html;
   bindTaskEvents(main);
+}
+function renderPlanMain(main){
+  var yearPlans=state.plans.filter(function(p){return p.type==='year'&&p.year===state.planYear});
+  var hasChildren=state.plans.filter(function(p){return p.parentId!==null&&p.year===state.planYear});
+  var allPlans=state.plans;
+  function renderCard(plan,depth){
+    var typeCls=plan.type==='year'?'ylevel':plan.type==='month'?'mlevel':'wlevel';
+    var sl={pending:'未开始',in_progress:'进行中',done:'已完成'};
+    var sc=plan.status==='done'?'done':plan.status==='in_progress'?'prog':'pend';
+    var h='<div class="plan-card '+typeCls+'" style="margin-left:'+(depth*20)+'px">';
+    h+='<div class="plan-row">';
+    if(plan.type!=='week'){
+      h+='<button class="plan-toggle-arrow">&'+(plan.expanded?'#9660;':'#9654;')+';</button>';
+    } else {h+='<span class="plan-toggle-arrow" style="visibility:hidden">&nbsp;</span>';}
+    h+='<span class="plan-title">'+esc(plan.title)+'</span>';
+    h+='<span class="plan-status '+sc+'">'+sl[plan.status]+'</span>';
+    h+='<button class="plan-edit" data-plan-id="'+plan.id+'">&#9998;</button>';
+    h+='<button class="plan-delete" data-plan-id="'+plan.id+'">&times;</button>';
+    h+='</div>';
+    if(plan.content)h+='<div class="plan-desc">'+esc(plan.content)+'</div>';
+    if(plan.type==='week'){
+      h+='<div class="plan-desc" style="font-size:11px;color:var(--text-3);margin-top:2px">'+plan.weekStart+' ~ '+plan.weekEnd+'</div>';
+    }
+    if(plan.type!=='week'){
+      h+='<div class="plan-progress"><div class="plan-track"><div class="plan-fill" style="width:'+(plan.progress||0)+'%"></div></div><span class="plan-pct">'+(plan.progress||0)+'%</span></div>';
+    }
+    if(plan.expanded&&plan.type!=='week'){
+      var children=allPlans.filter(function(p){return p.parentId===plan.id});
+      children.sort(function(a,b){
+        if(a.type==='month'&&b.type==='month')return (a.month||0)-(b.month||0);
+        if(a.type==='week'&&b.type==='week')return (a.weekStart||'').localeCompare(b.weekStart||'');
+        return 0;
+      });
+      children.forEach(function(c){h+=renderCard(c,depth+1)});
+      h+='<button class="plan-add-child" data-add-type="'+(plan.type==='year'?'month':'week')+'" data-parent-id="'+plan.id+'">+ 添加'+(plan.type==='year'?'月':'周')+'计划</button>';
+    }
+    h+='</div>';return h;
+  }
+  var html='<div class="year-selector">';
+  html+='<button class="yr-btn" data-yr-prev>'+(state.planYear-1)+'年</button>';
+  html+='<span class="yr-label">'+state.planYear+'年计划</span>';
+  html+='<button class="yr-btn" data-yr-next>'+(state.planYear+1)+'年</button>';
+  html+='<button class="yr-btn yr-add" data-add-type="year">+ 添加年计划</button>';
+  html+='</div>';
+  if(yearPlans.length===0&&hasChildren.length===0){
+    html+='<div class="empty-state"><div class="empty-state-title">还没有年度计划</div><div style="font-size:12px">点击"添加年计划"开始规划</div></div>';
+  } else {
+    yearPlans.forEach(function(yp){html+=renderCard(yp,0)});
+  }
+  main.innerHTML=html;
+  main.querySelectorAll('.plan-toggle-arrow').forEach(function(btn){
+    var planId=parseInt(btn.closest('.plan-card').querySelector('.plan-edit').dataset.planId);
+    btn.addEventListener('click',function(){togglePlanExpand(planId)});
+  });
+  main.querySelectorAll('.plan-edit').forEach(function(btn){
+    btn.addEventListener('click',function(e){e.stopPropagation();editPlan(parseInt(btn.dataset.planId))});
+  });
+  main.querySelectorAll('.plan-delete').forEach(function(btn){
+    btn.addEventListener('click',function(e){e.stopPropagation();deletePlan(parseInt(btn.dataset.planId))});
+  });
+  main.querySelectorAll('.plan-add-child,.yr-add').forEach(function(btn){
+    btn.addEventListener('click',function(e){e.stopPropagation();
+      var t=btn.dataset.addType,pid=parseInt(btn.dataset.parentId)||null;
+      var pinfo='';if(pid){for(var j=0;j<state.plans.length;j++){if(state.plans[j].id===pid){pinfo=state.plans[j].title;break}}}
+      addPlan(t,pid,pinfo);
+    });
+  });
+  main.querySelectorAll('[data-yr-prev]').forEach(function(b){b.addEventListener('click',function(){state.planYear--;render()})});
+  main.querySelectorAll('[data-yr-next]').forEach(function(b){b.addEventListener('click',function(){state.planYear++;render()})});
 }
 function renderNewsHTML(){
   var tabsHTML=NEWS_SOURCES.map(function(s){
@@ -845,6 +1130,7 @@ function deleteTask(id){state.tasks=state.tasks.filter(function(x){return x.id!=
 function switchView(view,module,category){
   state.currentView=view;state.currentModule=module||null;state.currentCategory=category||null;state.selectedDate=null;
   if(view==='module'){state.moduleDateFilter='today';state.moduleCustomDate=null}
+  if(view==='plan'){state.planYear=new Date().getFullYear()}
   render();
 }
 function selectModalModule(m){
@@ -924,7 +1210,7 @@ function init(){
   document.querySelectorAll('.mobile-tab').forEach(function(el){
     el.addEventListener('click',function(){
       var t=el.dataset.tab;
-      if(t==='today')switchView('today');else if(t==='history')switchView('history');else if(t==='calendar')switchView('calendar');else switchView('module',t);
+      if(t==='today')switchView('today');else if(t==='history')switchView('history');else if(t==='calendar')switchView('calendar');else if(t==='plan')switchView('plan');else switchView('module',t);
     });
   });
   document.getElementById('fab').addEventListener('click',openModal);
@@ -932,7 +1218,16 @@ function init(){
   document.querySelectorAll('[data-modal-priority]').forEach(function(el){el.addEventListener('click',function(){selectModalPriority(el.dataset.modalPriority)})});
   document.querySelectorAll('[data-modal-repeat]').forEach(function(el){el.addEventListener('click',function(){selectModalRepeat(el.dataset.modalRepeat)})});
   document.getElementById('taskTitle').addEventListener('keydown',function(e){if(e.key==='Enter')saveTask()});
-  document.addEventListener('keydown',function(e){if(e.key==='Escape')closeModal()});
+  document.addEventListener('keydown',function(e){if(e.key==='Escape'){closeModal();closePlanModal()}});
+  document.getElementById('btnSavePlan').addEventListener('click',savePlan);
+  document.getElementById('btnPlanCancel').addEventListener('click',closePlanModal);
+  document.getElementById('planModalOverlay').addEventListener('click',function(e){if(e.target===e.currentTarget)closePlanModal()});
+  document.getElementById('planType').addEventListener('change',function(){
+    var t=this.value;
+    document.getElementById('planMonthGroup').style.display=(t==='month'||t==='week')?'block':'none';
+    document.getElementById('planWeekGroup').style.display=(t==='week')?'block':'none';
+    document.getElementById('planProgressGroup').style.display=(t==='week')?'none':'block';
+  });
 }
 init();
 </script>
