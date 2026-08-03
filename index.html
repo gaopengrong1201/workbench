@@ -103,6 +103,12 @@ body{font-family:var(--font);font-size:14px;color:var(--text);background:var(--b
 .filter-chips{display:none;gap:6px;margin-bottom:12px;flex-wrap:wrap}
 .filter-chip{font-size:12px;padding:3px 10px;border-radius:14px;border:1px solid var(--border);cursor:pointer;color:var(--text-2)}
 .filter-chip.active{font-weight:500}
+.date-filter-bar{display:flex;gap:6px;margin-bottom:10px;align-items:center;flex-wrap:wrap}
+.date-filter-chip{font-size:13px;padding:5px 14px;border-radius:16px;border:1px solid var(--border);cursor:pointer;color:var(--text-2);background:var(--surface);transition:all .15s}
+.date-filter-chip.active{background:var(--blue-50);border-color:var(--blue-400);color:var(--blue-600);font-weight:500}
+.date-filter-chip:hover:not(.active){background:var(--surface-3)}
+.date-filter-picker{font-size:13px;padding:4px 8px;border:1px solid var(--border);border-radius:var(--radius);font-family:var(--font);color:var(--text-2);max-width:150px}
+.date-filter-picker:focus{outline:none;border-color:var(--blue-400)}
 .fab{display:none;position:fixed;bottom:90px;right:20px;width:56px;height:56px;border-radius:50%;background:var(--blue-600);color:#fff;border:none;cursor:pointer;z-index:100;font-family:var(--font);box-shadow:0 4px 12px rgba(24,95,165,.35);align-items:center;justify-content:center;transition:transform .15s,box-shadow .15s}
 .fab:active{transform:scale(.92);box-shadow:0 2px 8px rgba(24,95,165,.3)}
 .mobile-tabs{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--border);z-index:100;padding-bottom:env(safe-area-inset-bottom)}
@@ -301,7 +307,7 @@ var MODULES = {
   children:{name:'孩子',color:'teal',categories:{study:'学习管理',exercise:'运动健康',diet:'饮食作息'}},
   life:{name:'生活',color:'coral',categories:{dance:'跳舞',fitness:'健身',travel:'出游'}}
 };
-var state = {tasks:[],currentView:'today',currentModule:null,currentCategory:null,calendarDate:new Date(),selectedDate:null,newsData:null,newsLoading:false,currentNewsSource:'toutiao',newsError:null};
+var state = {tasks:[],currentView:'today',currentModule:null,currentCategory:null,calendarDate:new Date(),selectedDate:null,newsData:null,newsLoading:false,currentNewsSource:'toutiao',newsError:null,moduleDateFilter:'today',moduleCustomDate:null};
 var modalState = {module:'work',priority:'medium',repeat:'none',editingId:null};
 var NEWS_SOURCES = [
   {key:'toutiao',name:'头条热点',url:'https://dailyhotapi.3yu3.top/toutiao'},
@@ -358,6 +364,60 @@ function isTaskDoneOnDate(task,dateStr){
   if(task.completedDates)return task.completedDates.indexOf(dateStr)>=0;
   if(task.completed&&task.date===dateStr)return true;
   return false;
+}
+function taskInDateRange(task,startDate,endDate){
+  if(task.repeat==='none'||!task.repeat){
+    return task.date>=startDate&&task.date<=endDate;
+  }
+  if(task.date>endDate)return false;
+  if(task.repeatEndDate&&task.repeatEndDate<startDate)return false;
+  if(task.repeat==='daily')return task.date<=endDate;
+  if(task.repeat==='weekly'){
+    var taskDay=new Date(task.date).getDay();
+    var d=new Date(startDate);
+    while(fmtDate(d)<=endDate){
+      if(d.getDay()===taskDay&&fmtDate(d)>=task.date)return true;
+      d.setDate(d.getDate()+1);
+    }
+    return false;
+  }
+  if(task.repeat==='monthly'){
+    var taskDom=new Date(task.date).getDate();
+    var sd=new Date(startDate),ed=new Date(endDate);
+    var d=new Date(sd.getFullYear(),sd.getMonth(),1);
+    while(d<=ed){
+      var td=new Date(d.getFullYear(),d.getMonth(),taskDom);
+      if(td>=sd&&td<=ed&&fmtDate(td)>=task.date)return true;
+      d.setMonth(d.getMonth()+1);
+    }
+    return false;
+  }
+  return false;
+}
+function getModuleDateRange(){
+  var filter=state.moduleDateFilter;
+  if(filter==='custom'&&state.moduleCustomDate){
+    return{start:state.moduleCustomDate,end:state.moduleCustomDate};
+  }
+  if(filter==='all')return null;
+  var now=new Date();
+  if(filter==='today'){
+    var ts=getTodayStr();return{start:ts,end:ts};
+  }
+  if(filter==='week'){
+    var ws=new Date(now);ws.setDate(now.getDate()-now.getDay());
+    var we=new Date(ws);we.setDate(ws.getDate()+6);
+    return{start:fmtDate(ws),end:fmtDate(we)};
+  }
+  if(filter==='month'){
+    var ms=new Date(now.getFullYear(),now.getMonth(),1);
+    var me=new Date(now.getFullYear(),now.getMonth()+1,0);
+    return{start:fmtDate(ms),end:fmtDate(me)};
+  }
+  if(filter==='year'){
+    return{start:now.getFullYear()+'-01-01',end:now.getFullYear()+'-12-31'};
+  }
+  var ts2=getTodayStr();return{start:ts2,end:ts2};
 }
 function getViewDate(){
   if(state.currentView==='calendar'&&state.selectedDate)return state.selectedDate;
@@ -501,6 +561,10 @@ function getFilteredTasks(){
   else if(state.currentView==='module'){
     if(state.currentCategory)t=t.filter(function(x){return x.category===state.currentCategory});
     else if(state.currentModule)t=t.filter(function(x){return x.module===state.currentModule});
+    var range=getModuleDateRange();
+    if(range){
+      t=t.filter(function(x){return taskInDateRange(x,range.start,range.end)});
+    }
   }
   else if(state.currentView==='calendar'){
     if(state.selectedDate)t=t.filter(function(x){return taskOnDate(x,state.selectedDate)});else return[];
@@ -514,8 +578,10 @@ function getViewTitle(){
   if(state.currentView==='history')return '历史遗留任务';
   if(state.currentView==='calendar'&&state.selectedDate){var d=new Date(state.selectedDate);return(d.getMonth()+1)+'月'+d.getDate()+'日待办'}
   if(state.currentView==='module'){
-    if(state.currentCategory)return MODULES[state.currentModule].categories[state.currentCategory];
-    return MODULES[state.currentModule].name+'模块';
+    var dfNames={today:'今日',week:'本周',month:'本月',year:'本年',all:'全部',custom:state.moduleCustomDate||'指定日'};
+    var dfName=dfNames[state.moduleDateFilter]||'今日';
+    if(state.currentCategory)return MODULES[state.currentModule].categories[state.currentCategory]+' · '+dfName;
+    return MODULES[state.currentModule].name+'模块 · '+dfName;
   }
   return '任务列表';
 }
@@ -565,7 +631,16 @@ function renderMain(){
   var chips='';
   if(state.currentView==='module'&&state.currentModule){
     var mod=MODULES[state.currentModule];
-    chips='<div class="filter-chips"><span class="filter-chip'+(!state.currentCategory?' active':'')+'" data-fcat="">全部</span>';
+    var df=state.moduleDateFilter;
+    chips='<div class="date-filter-bar">';
+    chips+='<span class="date-filter-chip'+(df==='today'?' active':'')+'" data-dfilter="today">今日</span>';
+    chips+='<span class="date-filter-chip'+(df==='week'?' active':'')+'" data-dfilter="week">本周</span>';
+    chips+='<span class="date-filter-chip'+(df==='month'?' active':'')+'" data-dfilter="month">本月</span>';
+    chips+='<span class="date-filter-chip'+(df==='year'?' active':'')+'" data-dfilter="year">本年</span>';
+    chips+='<span class="date-filter-chip'+(df==='all'?' active':'')+'" data-dfilter="all">全部</span>';
+    chips+='<input type="date" class="date-filter-picker" id="moduleDatePicker" value="'+(state.moduleCustomDate||'')+'" title="选择具体日期" />';
+    chips+='</div>';
+    chips+='<div class="filter-chips"><span class="filter-chip'+(!state.currentCategory?' active':'')+'" data-fcat="">全部</span>';
     Object.keys(mod.categories).forEach(function(k){chips+='<span class="filter-chip'+(state.currentCategory===k?' active':'')+'" data-fcat="'+k+'">'+mod.categories[k]+'</span>'});
     chips+='</div>';
   }
@@ -598,6 +673,9 @@ function renderMain(){
   main.innerHTML=html;
   bindTaskEvents(main);
   main.querySelectorAll('.filter-chip').forEach(function(chip){chip.addEventListener('click',function(){state.currentCategory=chip.dataset.fcat||null;render()})});
+  main.querySelectorAll('.date-filter-chip').forEach(function(chip){chip.addEventListener('click',function(){state.moduleDateFilter=chip.dataset.dfilter;if(chip.dataset.dfilter!=='custom')state.moduleCustomDate=null;render()})});
+  var datePicker=document.getElementById('moduleDatePicker');
+  if(datePicker){datePicker.addEventListener('change',function(){if(datePicker.value){state.moduleDateFilter='custom';state.moduleCustomDate=datePicker.value;render()}})}
   if(state.currentView==='today'){
     bindNewsEvents(main);
     if(!state.newsData||!state.newsData[state.currentNewsSource]){fetchNews()}
@@ -765,7 +843,9 @@ function toggleTask(id,dateStr){
 }
 function deleteTask(id){state.tasks=state.tasks.filter(function(x){return x.id!==id});saveData();render()}
 function switchView(view,module,category){
-  state.currentView=view;state.currentModule=module||null;state.currentCategory=category||null;state.selectedDate=null;render();
+  state.currentView=view;state.currentModule=module||null;state.currentCategory=category||null;state.selectedDate=null;
+  if(view==='module'){state.moduleDateFilter='today';state.moduleCustomDate=null}
+  render();
 }
 function selectModalModule(m){
   modalState.module=m;
