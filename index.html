@@ -668,22 +668,54 @@ function getOverdueTasks(){
 }
 function getLastRepeatDateBefore(task,beforeDate){
   if(task.repeat==='daily'){
-    var d=new Date(beforeDate);d.setDate(d.getDate()-1);
-    return fmtDate(d);
+    if(!task.completedDates||task.completedDates.length===0)return task.date;
+    var sorted=task.completedDates.slice().sort();
+    var lastDone=sorted[sorted.length-1];
+    var d=new Date(lastDone);d.setDate(d.getDate()+1);
+    while(fmtDate(d)<beforeDate){
+      var ds=fmtDate(d);
+      if(!(task.skippedDates&&task.skippedDates.indexOf(ds)>=0))return ds;
+      d.setDate(d.getDate()+1);
+    }
+    var d2=new Date(beforeDate);d2.setDate(d2.getDate()-1);
+    return fmtDate(d2);
   }
   if(task.repeat==='weekly'){
-    var td=new Date(beforeDate);var wd=td.getDay();var dd=new Date(task.date).getDay();
-    var diff=(wd-dd+7)%7;
+    var taskDay=new Date(task.date).getDay();
+    if(!task.completedDates||task.completedDates.length===0)return task.date;
+    var sorted=task.completedDates.slice().sort();
+    var lastDone=sorted[sorted.length-1];
+    var d=new Date(lastDone);d.setDate(d.getDate()+1);
+    while(d.getDay()!==taskDay)d.setDate(d.getDate()+1);
+    while(fmtDate(d)<beforeDate){
+      var ds=fmtDate(d);
+      if(!(task.skippedDates&&task.skippedDates.indexOf(ds)>=0))return ds;
+      d.setDate(d.getDate()+7);
+    }
+    var td=new Date(beforeDate);var wd=td.getDay();
+    var diff=(wd-taskDay+7)%7;
     td.setDate(td.getDate()-diff);
-    if(fmtDate(td)===beforeDate){td.setDate(td.getDate()-7)}
+    if(fmtDate(td)===beforeDate)td.setDate(td.getDate()-7);
     return fmtDate(td);
   }
   if(task.repeat==='monthly'){
-    var d=new Date(beforeDate);
     var day=new Date(task.date).getDate();
-    if(d.getDate()===day){d.setMonth(d.getMonth()-1)}
-    while(new Date(d.getFullYear(),d.getMonth(),day).getDate()!==day){d.setMonth(d.getMonth()-1)}
-    return fmtDate(new Date(d.getFullYear(),d.getMonth(),day));
+    if(!task.completedDates||task.completedDates.length===0)return task.date;
+    var sorted=task.completedDates.slice().sort();
+    var lastDone=sorted[sorted.length-1];
+    var d=new Date(lastDone);d.setMonth(d.getMonth()+1);
+    while(new Date(d.getFullYear(),d.getMonth(),day).getDate()!==day)d.setMonth(d.getMonth()+1);
+    var cur=new Date(d.getFullYear(),d.getMonth(),day);
+    while(fmtDate(cur)<beforeDate){
+      var ds=fmtDate(cur);
+      if(!(task.skippedDates&&task.skippedDates.indexOf(ds)>=0))return ds;
+      cur.setMonth(cur.getMonth()+1);
+      while(new Date(cur.getFullYear(),cur.getMonth(),day).getDate()!==day)cur.setMonth(cur.getMonth()+1);
+    }
+    var d2=new Date(beforeDate);
+    if(d2.getDate()===day)d2.setMonth(d2.getMonth()-1);
+    while(new Date(d2.getFullYear(),d2.getMonth(),day).getDate()!==day)d2.setMonth(d2.getMonth()-1);
+    return fmtDate(new Date(d2.getFullYear(),d2.getMonth(),day));
   }
   return task.date;
 }
@@ -839,6 +871,12 @@ function renderTaskCard(task,dateStr){
     var rp=rm[task.repeat];
     if(task.repeatEndDate)rp+='至'+task.repeatEndDate;
     info+='<span class="task-meta">🔁 '+rp+'</span>';
+    if(task._isRepeatOverdue&&task._overdueDate){
+      var od=new Date(task._overdueDate);
+      info+='<span class="task-meta task-meta-date">📅 '+(od.getMonth()+1)+'月'+od.getDate()+'日遗留</span>';
+      var daysOd=Math.floor((new Date(todayStr)-new Date(task._overdueDate))/86400000);
+      if(daysOd>0)info+='<span class="task-meta task-meta-overdue">⚠ 逾期'+daysOd+'天</span>';
+    }
   }
   if(task.time)info+='<span class="task-meta">⏰ '+task.time+'</span>';
   if(task.priority==='high'&&!done)info+='<span class="task-meta urgent">高优先</span>';
