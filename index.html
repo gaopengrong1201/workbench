@@ -656,15 +656,65 @@ function getOverdueTasks(){
     if(t.repeat==='none'||!t.repeat){
       if(!t.completed&&t.date<todayStr)result.push(t);
     } else {
-      if(!isTaskDoneOnDate(t,todayStr)&&taskOnDate(t,todayStr)){
-        var lastDate=getLastRepeatDateBefore(t,todayStr);
-        if(lastDate)result.push(Object.assign({},t,{_overdueDate:lastDate,_isRepeatOverdue:true}));
-      }
+      var missedDates=getAllMissedDates(t,todayStr);
+      missedDates.forEach(function(md){
+        result.push(Object.assign({},t,{_overdueDate:md,_isRepeatOverdue:true}));
+      });
     }
   });
   var po={high:0,medium:1,low:2};
   result.sort(function(a,b){if(po[a.priority]!==po[b.priority])return po[a.priority]-po[b.priority];return a.date.localeCompare(b.date)});
   return result;
+}
+function getAllMissedDates(task,beforeDate){
+  var missed=[];
+  if(task.repeat==='daily'){
+    var start=new Date(task.date);
+    if(task.completedDates&&task.completedDates.length>0){
+      var sorted=task.completedDates.slice().sort();
+      start=new Date(sorted[sorted.length-1]);
+      start.setDate(start.getDate()+1);
+    }
+    var d=new Date(start);
+    while(fmtDate(d)<beforeDate){
+      var ds=fmtDate(d);
+      if(taskOnDate(task,ds)&&!isTaskDoneOnDate(task,ds))missed.push(ds);
+      d.setDate(d.getDate()+1);
+    }
+  } else if(task.repeat==='weekly'){
+    var taskDay=new Date(task.date).getDay();
+    var start=new Date(task.date);
+    if(task.completedDates&&task.completedDates.length>0){
+      var sorted=task.completedDates.slice().sort();
+      start=new Date(sorted[sorted.length-1]);
+      start.setDate(start.getDate()+1);
+    }
+    var d=new Date(start);
+    while(d.getDay()!==taskDay)d.setDate(d.getDate()+1);
+    while(fmtDate(d)<beforeDate){
+      var ds=fmtDate(d);
+      if(taskOnDate(task,ds)&&!isTaskDoneOnDate(task,ds))missed.push(ds);
+      d.setDate(d.getDate()+7);
+    }
+  } else if(task.repeat==='monthly'){
+    var day=new Date(task.date).getDate();
+    var start=new Date(task.date);
+    if(task.completedDates&&task.completedDates.length>0){
+      var sorted=task.completedDates.slice().sort();
+      var lastDone=new Date(sorted[sorted.length-1]);
+      start=new Date(lastDone);
+      start.setMonth(start.getMonth()+1);
+    }
+    var cur=new Date(start.getFullYear(),start.getMonth(),day);
+    while(new Date(cur.getFullYear(),cur.getMonth(),day).getDate()!==day)cur.setMonth(cur.getMonth()+1);
+    while(fmtDate(cur)<beforeDate){
+      var ds=fmtDate(cur);
+      if(taskOnDate(task,ds)&&!isTaskDoneOnDate(task,ds))missed.push(ds);
+      cur.setMonth(cur.getMonth()+1);
+      while(new Date(cur.getFullYear(),cur.getMonth(),day).getDate()!==day)cur.setMonth(cur.getMonth()+1);
+    }
+  }
+  return missed;
 }
 function getLastRepeatDateBefore(task,beforeDate){
   if(task.repeat==='daily'){
